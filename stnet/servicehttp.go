@@ -81,6 +81,7 @@ type HttpService interface {
 	Loop()
 	HandleError(current *CurrentContent, e error)
 	HashProcessor(current *CurrentContent, req *http.Request) (processorID int)
+	Handle(current *CurrentContent, req *http.Request)
 }
 
 // ServiceHttp
@@ -100,8 +101,12 @@ func (service *ServiceHttp) Loop() {
 
 func (service *ServiceHttp) HandleMessage(current *CurrentContent, msgID uint64, msg interface{}) {
 	r := msg.(*http.Request)
-	h, _ := service.h.Handler(r)
-	h.ServeHTTP(&httpWriter{current: current, header: make(http.Header)}, r)
+	if service.h != nil {
+		h, _ := service.h.Handler(r)
+		h.ServeHTTP(&httpWriter{current: current, header: make(http.Header)}, r)
+	} else {
+		service.imp.Handle(current, r)
+	}
 }
 
 func (service *ServiceHttp) HandleError(current *CurrentContent, err error) {
